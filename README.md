@@ -87,3 +87,184 @@ echo $?
 
 마지막 명령은 macOS/Linux에서 오류 종료 코드 1을 확인합니다. PowerShell에서는 `$LASTEXITCODE`를 사용합니다.
 테스트는 임시 폴더에서 실행하므로 실제 거래 데이터에 영향을 주지 않습니다.
+
+# 용돈 기입장 실행 예시
+
+프로젝트 폴더에서 실행합니다. Python 3.10 이상이 필요하며, Windows에서는 `python3` 대신 `python`을 사용합니다.
+
+## 1. 도움말
+
+```sh
+python3 -m budget_app --help
+```
+
+## 2. 거래 추가
+
+```sh
+python3 -m budget_app add
+```
+
+질문에 따라 다음 값을 한 줄씩 입력합니다.
+
+수입 예시:
+
+```text
+2026-10-01
+income
+salary
+300000
+용돈
+allowance
+```
+
+같은 명령을 다시 실행하여 지출도 입력합니다.
+
+```text
+2026-10-02
+expense
+food
+15000
+점심
+meal,school
+```
+
+## 3. 거래 목록
+
+```sh
+python3 -m budget_app list
+python3 -m budget_app list --limit 5
+```
+
+## 4. 거래 검색
+
+```sh
+python3 -m budget_app search --from 2026-10-01 --to 2026-10-31
+python3 -m budget_app search --category food
+python3 -m budget_app search --type expense
+python3 -m budget_app search --q 점심
+python3 -m budget_app search --tag meal
+```
+
+여러 조건을 동시에 적용할 수도 있습니다.
+
+```sh
+python3 -m budget_app search --from 2026-10-01 --to 2026-10-31 --category food --type expense --q 점심 --tag meal
+```
+
+## 5. 월별 요약
+
+```sh
+python3 -m budget_app summary --month 2026-10 --top 3
+```
+
+## 6. 예산 설정과 확인
+
+```sh
+python3 -m budget_app budget set --month 2026-10 --amount 10000
+python3 -m budget_app summary --month 2026-10
+```
+
+요약에서 예산 사용률과 초과 여부를 확인합니다.
+
+## 7. 카테고리 관리
+
+```sh
+python3 -m budget_app category add
+```
+
+카테고리 이름으로 `books`를 입력합니다.
+
+```sh
+python3 -m budget_app category list
+python3 -m budget_app category remove
+```
+
+삭제할 이름으로 `books`를 입력합니다. 사용 중인 카테고리를 입력하면 삭제가 거부됩니다.
+
+## 8. 거래 수정
+
+`TX-실제ID`를 목록에서 확인한 거래 id로 바꿉니다.
+
+```sh
+python3 -m budget_app update --id TX-실제ID --amount 12000
+python3 -m budget_app list
+```
+
+다른 항목도 수정할 수 있습니다.
+
+```sh
+python3 -m budget_app update --id TX-실제ID --memo "점심값 수정" --tags "meal,school"
+```
+
+## 9. CSV 내보내기
+
+월 기준:
+
+```sh
+python3 -m budget_app export --out october.csv --month 2026-10
+```
+
+기간 기준:
+
+```sh
+python3 -m budget_app export --out period.csv --from 2026-10-01 --to 2026-10-15
+```
+
+## 10. CSV 가져오기
+
+별도 폴더에 가져와 원래 데이터와 구분합니다.
+
+```sh
+python3 -m budget_app --data-dir ./import-demo import --from october.csv
+python3 -m budget_app --data-dir ./import-demo list
+```
+
+CSV 헤더는 다음과 같습니다.
+
+```csv
+date,type,category,amount,memo,tags
+```
+
+같은 CSV를 반복해서 가져오면 거래가 중복 등록됩니다.
+
+## 11. 거래 삭제
+
+```sh
+python3 -m budget_app delete --id TX-실제ID
+python3 -m budget_app list
+```
+
+## 12. 오류 처리 확인
+
+잘못된 날짜:
+
+```sh
+python3 -m budget_app search --from 2026-13-01
+```
+
+잘못된 금액:
+
+```sh
+python3 -m budget_app budget set --month 2026-10 --amount -100
+```
+
+없는 파일:
+
+```sh
+python3 -m budget_app import --from 없는파일.csv
+```
+
+없는 거래와 오류 종료 코드 확인(macOS/Linux):
+
+```sh
+python3 -m budget_app delete --id 없는ID
+echo $?
+```
+
+오류 종료 코드 `1`이 출력됩니다. PowerShell에서는 `echo $?` 대신 `$LASTEXITCODE`를 사용합니다.
+
+## 13. 자동 테스트
+
+```sh
+python3 -m unittest discover -s tests -v
+```
